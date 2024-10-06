@@ -52,10 +52,8 @@ impl SampleType {
     /// Therefore the total number of bytes per sample twice the length of the datatype.
     #[must_use] pub fn sample_len(&self) -> usize {
         match self {
-            SampleType::U8 => 2,
-            SampleType::I8 => 2,
-            SampleType::I16 => 4,
-            SampleType::U16 => 4,
+            SampleType::U8 | SampleType::I8 => 2,
+            SampleType::I16 | SampleType::U16=> 4,
             SampleType::F32 => 8,
             SampleType::F64 => 16,
         }
@@ -79,10 +77,15 @@ impl SdrFileReader {
 
     /// Read the next chunk of samples as Complex<f32> from the file.
     ///
+    /// # Warning
+    /// If you have set the sample type to `SampleType::F64`, you should use `read_next_chunk_complexf64` instead. Otherwise, the values will be truncated and you will lose accuracy.
+    ///
     /// # Returns
     /// - `Ok(Some(samples))` if there are samples in the chunk
     /// - `Ok(None)` if the end of the file is reached
-    /// - `Err(why)` if there was an error reading the file other than reaching the end
+    ///
+    /// # Errors
+    /// - `std::io::Error` if there was an error reading the file other than reaching the end
     pub fn read_next_chunk_complexf32(&mut self) -> Result<Option<Vec<Complex<f32>>>, std::io::Error> {
         let mut buffer = vec![0u8; self.samples_per_chunk * self.sample_type.sample_len()]; // 2 for I and Q
         match self.reader.read_exact(&mut buffer) {
@@ -99,6 +102,7 @@ impl SdrFileReader {
                         .for_each(|s| samples.push(Complex::new(f32::from(i16::from_ne_bytes([s[0], s[1]])), f32::from(i16::from_ne_bytes([s[2], s[3]]))))),
                     SampleType::F32 => buffer.chunks_exact(self.sample_type.sample_len())
                         .for_each(|s| samples.push(Complex::new(f32::from_ne_bytes([s[0], s[1], s[2], s[3]]), f32::from_ne_bytes([s[4], s[5], s[6], s[7]])))),
+                    #[allow(clippy::cast_possible_truncation)]
                     SampleType::F64 => buffer.chunks_exact(self.sample_type.sample_len())
                         .for_each(|s| samples.push(Complex::new(f64::from_ne_bytes([s[0], s[1], s[2], s[3], s[4], s[5], s[6], s[7]]) as f32, f64::from_ne_bytes([s[8], s[9], s[10], s[11], s[12], s[13], s[14], s[15]]) as f32))),
                 }
@@ -116,7 +120,9 @@ impl SdrFileReader {
     /// # Returns
     /// - `Ok(Some(samples))` if there are samples in the chunk
     /// - `Ok(None)` if the end of the file is reached
-    /// - `Err(why)` if there was an error reading the file other than reaching the end
+    ///
+    /// # Errors
+    /// - `std::io::Error` if there was an error reading the file other than reaching the end
     pub fn read_next_chunk_complexf64(&mut self) -> Result<Option<Vec<Complex<f64>>>, std::io::Error> {
         let mut buffer = vec![0u8; self.samples_per_chunk * self.sample_type.sample_len()]; // 2 for I and Q
         match self.reader.read_exact(&mut buffer) {
