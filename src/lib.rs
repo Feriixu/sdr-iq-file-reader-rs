@@ -9,7 +9,7 @@ use std::path::Path;
 use bon::{bon};
 use num_complex::{Complex};
 
-/// Create a new SdrFileReader using the builder pattern.
+/// Create a new `SdrFileReader` using the builder pattern.
 /// Then call `read_next_chunk_complexf32` or `read_next_chunk_complexf64` to read the samples.
 ///
 /// # Example
@@ -50,7 +50,7 @@ impl SampleType {
     /// The number of bytes per sample.
     /// One sample has 2 values: I and Q.
     /// Therefore the total number of bytes per sample twice the length of the datatype.
-    pub fn sample_len(&self) -> usize {
+    #[must_use] pub fn sample_len(&self) -> usize {
         match self {
             SampleType::U8 => 2,
             SampleType::I8 => 2,
@@ -86,17 +86,17 @@ impl SdrFileReader {
     pub fn read_next_chunk_complexf32(&mut self) -> Result<Option<Vec<Complex<f32>>>, std::io::Error> {
         let mut buffer = vec![0u8; self.samples_per_chunk * self.sample_type.sample_len()]; // 2 for I and Q
         match self.reader.read_exact(&mut buffer) {
-            Ok(_) => {
+            Ok(()) => {
                 let mut samples = Vec::with_capacity(self.samples_per_chunk);
                 match self.sample_type {
                     SampleType::U8 => buffer.chunks_exact(self.sample_type.sample_len())
-                        .for_each(|s| samples.push(Complex::new(s[0] as f32, s[1] as f32))),
+                        .for_each(|s| samples.push(Complex::new(f32::from(s[0]), f32::from(s[1])))),
                     SampleType::I8 => buffer.chunks_exact(self.sample_type.sample_len())
-                        .for_each(|s| samples.push(Complex::new(i8::from_ne_bytes([s[0]]) as f32, i8::from_ne_bytes([s[1]]) as f32))),
+                        .for_each(|s| samples.push(Complex::new(f32::from(i8::from_ne_bytes([s[0]])), f32::from(i8::from_ne_bytes([s[1]]))))),
                     SampleType::U16 => buffer.chunks_exact(self.sample_type.sample_len())
-                        .for_each(|s| samples.push(Complex::new(u16::from_ne_bytes([s[0], s[1]]) as f32, u16::from_ne_bytes([s[2], s[3]]) as f32))),
+                        .for_each(|s| samples.push(Complex::new(f32::from(u16::from_ne_bytes([s[0], s[1]])), f32::from(u16::from_ne_bytes([s[2], s[3]]))))),
                     SampleType::I16 => buffer.chunks_exact(self.sample_type.sample_len())
-                        .for_each(|s| samples.push(Complex::new(i16::from_ne_bytes([s[0], s[1]]) as f32, i16::from_ne_bytes([s[2], s[3]]) as f32))),
+                        .for_each(|s| samples.push(Complex::new(f32::from(i16::from_ne_bytes([s[0], s[1]])), f32::from(i16::from_ne_bytes([s[2], s[3]]))))),
                     SampleType::F32 => buffer.chunks_exact(self.sample_type.sample_len())
                         .for_each(|s| samples.push(Complex::new(f32::from_ne_bytes([s[0], s[1], s[2], s[3]]), f32::from_ne_bytes([s[4], s[5], s[6], s[7]])))),
                     SampleType::F64 => buffer.chunks_exact(self.sample_type.sample_len())
@@ -120,19 +120,19 @@ impl SdrFileReader {
     pub fn read_next_chunk_complexf64(&mut self) -> Result<Option<Vec<Complex<f64>>>, std::io::Error> {
         let mut buffer = vec![0u8; self.samples_per_chunk * self.sample_type.sample_len()]; // 2 for I and Q
         match self.reader.read_exact(&mut buffer) {
-            Ok(_) => {
+            Ok(()) => {
                 let mut samples = Vec::with_capacity(self.samples_per_chunk);
                 match self.sample_type {
                     SampleType::U8 => buffer.chunks_exact(self.sample_type.sample_len())
-                        .for_each(|s| samples.push(Complex::new(s[0] as f64, s[1] as f64))),
+                        .for_each(|s| samples.push(Complex::new(f64::from(s[0]), f64::from(s[1])))),
                     SampleType::I8 => buffer.chunks_exact(self.sample_type.sample_len())
-                        .for_each(|s| samples.push(Complex::new(i8::from_ne_bytes([s[0]]) as f64, i8::from_ne_bytes([s[1]]) as f64))),
+                        .for_each(|s| samples.push(Complex::new(f64::from(i8::from_ne_bytes([s[0]])), f64::from(i8::from_ne_bytes([s[1]]))))),
                     SampleType::U16 => buffer.chunks_exact(self.sample_type.sample_len())
-                        .for_each(|s| samples.push(Complex::new(u16::from_ne_bytes([s[0], s[1]]) as f64, u16::from_ne_bytes([s[2], s[3]]) as f64))),
+                        .for_each(|s| samples.push(Complex::new(f64::from(u16::from_ne_bytes([s[0], s[1]])), f64::from(u16::from_ne_bytes([s[2], s[3]]))))),
                     SampleType::I16 => buffer.chunks_exact(self.sample_type.sample_len())
-                        .for_each(|s| samples.push(Complex::new(i16::from_ne_bytes([s[0], s[1]]) as f64, i16::from_ne_bytes([s[2], s[3]]) as f64))),
+                        .for_each(|s| samples.push(Complex::new(f64::from(i16::from_ne_bytes([s[0], s[1]])), f64::from(i16::from_ne_bytes([s[2], s[3]]))))),
                     SampleType::F32 => buffer.chunks_exact(self.sample_type.sample_len())
-                        .for_each(|s| samples.push(Complex::new(f32::from_ne_bytes([s[0], s[1], s[2], s[3]]) as f64, f32::from_ne_bytes([s[4], s[5], s[6], s[7]]) as f64))),
+                        .for_each(|s| samples.push(Complex::new(f64::from(f32::from_ne_bytes([s[0], s[1], s[2], s[3]])), f64::from(f32::from_ne_bytes([s[4], s[5], s[6], s[7]]))))),
                     SampleType::F64 => buffer.chunks_exact(self.sample_type.sample_len())
                         .for_each(|s| samples.push(Complex::new(f64::from_ne_bytes([s[0], s[1], s[2], s[3], s[4], s[5], s[6], s[7]]), f64::from_ne_bytes([s[8], s[9], s[10], s[11], s[12], s[13], s[14], s[15]])))),
                 }
