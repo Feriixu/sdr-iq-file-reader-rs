@@ -1,0 +1,25 @@
+[package]
+name = "sdr-iq-file-reader"
+version = "0.1.0"
+edition = "2021"
+authors = ["Feriixu <remoteit-api.9iois@passmail.net>"]
+license = "MIT OR Apache-2.0"
+description = "A Rust library for reading and parsing SDR (Software Defined Radio) files into complex samples. Supports various sample formats including u8, i8, i16, u16, f32, and f64."
+repository = "https://github.com/Feriixu/sdr-iq-file-reader-rs"
+keywords = ["sdr", "iq", "parsing", "reader", "samples"]
+categories = ["encoding", "parsing", "science"]
+
+
+[lints.rust]
+missing_docs = "deny"
+
+[lints.clippy]
+pedantic = "warn"
+cargo = "warn"
+missing_errors_doc = { level = "deny", priority = -1 }
+missing_panics_doc = { level = "deny", priority = -1 }
+
+[dependencies]
+num-complex = "0.4.6"
+num-traits = "0.2.19"
+bon = "2.3.0"
