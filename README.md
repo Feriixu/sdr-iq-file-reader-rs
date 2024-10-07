@@ -43,30 +43,6 @@ The `SampleType` enum represents the different formats of samples that can be us
 - `F32`: 32-bit floating point
 - `F64`: 64-bit floating point
 
-## Methods
-### `SdrFileReader::new`
-Creates a new `SdrFileReader` instance.
-
-**Arguments**:
-- `file_path`: The path to the SDR file to be read.
-- `samples_per_chunk`: The number of samples to read per chunk.
-- `sample_type`: The type of samples in the SDR file.
-
-### `read_next_chunk_complexf32`
-Reads the next chunk of samples as `Complex<f32>`.
-
-### `read_next_chunk_complexf64`
-Reads the next chunk of samples as `Complex<f64>`.
-
-## Testing
-The library includes tests that verify the functionality of reading both `Complex<f32>` and `Complex<f64>` data from SDR files. Additionally, it has a test to compare the output of both reading functions to ensure consistency across different data types.
-
-To run the tests, use:
-
-```sh
-cargo test
-```
-
 ## License
 This project is licensed under the MIT License.
 
