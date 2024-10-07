@@ -42,7 +42,3 @@ The `SampleType` enum represents the different formats of samples that can be us
 - `U16`: Unsigned 16-bit integer
 - `F32`: 32-bit floating point
 - `F64`: 64-bit floating point
-
-## License
-This project is licensed under the MIT License.
-
