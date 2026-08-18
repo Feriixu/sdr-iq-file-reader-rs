@@ -1,6 +1,6 @@
 [package]
 name = "sdr-iq-file-reader"
-version = "1.0.3"
+version = "1.0.4"
 edition = "2021"
 authors = ["Feriixu <remoteit-api.9iois@passmail.net>"]
 license = "MIT OR Apache-2.0"
@@ -22,4 +22,4 @@ missing_panics_doc = { level = "deny", priority = -1 }
 [dependencies]
 num-complex = "0.4.6"
 num-traits = "0.2.19"
-bon = "2.3.0"
+bon = "3.9.3"
