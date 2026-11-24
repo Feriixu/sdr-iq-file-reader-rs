@@ -1,6 +1,6 @@
 # SDR File Reader Library
 
-`sdr_file_reader` is a Rust library for reading and parsing Software Defined Radio (SDR) files. It supports a wide range of sample formats, including unsigned and signed 8-bit and 16-bit integers, as well as 32-bit and 64-bit floating-point numbers. The library provides an easy interface for converting raw SDR data into complex samples that can be used for further processing.
+`sdr-iq-file-reader` is a Rust library for reading and parsing Software Defined Radio (SDR) files. It supports a wide range of sample formats, including unsigned and signed 8-bit and 16-bit integers, as well as 32-bit and 64-bit floating-point numbers. The library provides an easy interface for converting raw SDR data into complex samples that can be used for further processing.
 
 ## Features
 - Supports multiple sample types: `u8`, `i8`, `i16`, `u16`, `f32`, and `f64`.
@@ -12,18 +12,22 @@ Add the following to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-sdr_file_reader = "0.1.0"
+sdr-iq-file-reader = "1"
 ```
 
 ## Usage
-Here is an example of how to use the `sdr_file_reader` library to read SDR data from a file:
+Here is an example of how to use the `sdr-iq-file-reader` library to read SDR data from a file:
 
 ```rust
-use sdr_file_reader::{SdrFileReader, SampleType};
+use sdr_iq_file_reader::{SampleType, SdrFileReader};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let file_path = "gqrx_20240929_015218_580206500_2400000_fc.raw";
-    let mut reader = SdrFileReader::new(file_path, 1024, SampleType::F32)?;
+    let mut reader = SdrFileReader::builder()
+        .file_path(file_path)
+        .samples_per_chunk(1024)
+        .sample_type(SampleType::F32)
+        .build()?;
 
     while let Some(samples) = reader.read_next_chunk_complexf32()? {
         // Process the samples here

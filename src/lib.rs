@@ -13,7 +13,7 @@ use std::path::Path;
 /// Then call `read_next_chunk_complexf32` or `read_next_chunk_complexf64` to read the samples.
 ///
 /// # Example
-/// ```
+/// ```no_run
 /// use sdr_iq_file_reader::{SdrFileReader, SampleType};
 /// let mut reader = SdrFileReader::builder()
 ///     .file_path("gqrx_20240929_015218_580206500_2400000_fc.raw")
@@ -79,7 +79,7 @@ impl SdrFileReader {
         })
     }
 
-    /// Read the next chunk of samples as Complex<f32> from the file.
+    /// Read the next chunk of samples as `Complex<f32>` from the file.
     ///
     /// # Warning
     /// If you have set the sample type to `SampleType::F64`, you should use `read_next_chunk_complexf64` instead. Otherwise, the values will be truncated and you will lose accuracy.
@@ -166,7 +166,7 @@ impl SdrFileReader {
         }
     }
 
-    /// Read the next chunk of samples as Complex<f64> from the file.
+    /// Read the next chunk of samples as `Complex<f64>` from the file.
     ///
     /// # Returns
     /// - `Ok(Some(samples))` if there are samples in the chunk
@@ -253,40 +253,80 @@ impl SdrFileReader {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::path::PathBuf;
+    use std::sync::atomic::{AtomicUsize, Ordering};
+
+    static NEXT_FILE_ID: AtomicUsize = AtomicUsize::new(0);
+
+    struct TestFile(PathBuf);
+
+    impl Drop for TestFile {
+        fn drop(&mut self) {
+            std::fs::remove_file(&self.0).expect("Failed to remove test file");
+        }
+    }
+
+    fn test_file() -> TestFile {
+        let id = NEXT_FILE_ID.fetch_add(1, Ordering::Relaxed);
+        let path = std::env::temp_dir().join(format!(
+            "sdr-iq-file-reader-{}-{id}.raw",
+            std::process::id()
+        ));
+        let mut bytes = Vec::with_capacity(2048 * 8);
+        for _ in 0..2048 {
+            bytes.extend_from_slice(&1.0_f32.to_ne_bytes());
+            bytes.extend_from_slice(&(-2.0_f32).to_ne_bytes());
+        }
+        std::fs::write(&path, bytes).expect("Failed to create test file");
+        TestFile(path)
+    }
 
     #[test]
     fn test_sdr_file_reader_f32() {
-        let file_path = "gqrx_20240929_015218_580206500_2400000_fc.raw";
+        let file = test_file();
+        let file_path = &file.0;
         let mut reader = SdrFileReader::builder()
             .file_path(file_path)
             .samples_per_chunk(1024)
             .sample_type(SampleType::F32)
             .build()
             .expect("Failed to create SdrFileReader");
+        let mut chunks = 0;
         while let Some(samples) = reader.read_next_chunk_complexf32().unwrap() {
             assert_eq!(samples.len(), 1024);
-            // Further assertions can be added based on expected values
+            assert!(samples
+                .iter()
+                .all(|sample| *sample == Complex::new(1.0, -2.0)));
+            chunks += 1;
         }
+        assert_eq!(chunks, 2);
     }
 
     #[test]
     fn test_sdr_file_reader_f64() {
-        let file_path = "gqrx_20240929_015218_580206500_2400000_fc.raw";
+        let file = test_file();
+        let file_path = &file.0;
         let mut reader = SdrFileReader::builder()
             .file_path(file_path)
             .samples_per_chunk(1024)
             .sample_type(SampleType::F32)
             .build()
             .expect("Failed to create SdrFileReader");
+        let mut chunks = 0;
         while let Some(samples) = reader.read_next_chunk_complexf64().unwrap() {
             assert_eq!(samples.len(), 1024);
-            // Further assertions can be added based on expected values
+            assert!(samples
+                .iter()
+                .all(|sample| *sample == Complex::new(1.0, -2.0)));
+            chunks += 1;
         }
+        assert_eq!(chunks, 2);
     }
 
     #[test]
     fn test_compare_f32_f64_readings() {
-        let file_path = "gqrx_20240929_015218_580206500_2400000_fc.raw";
+        let file = test_file();
+        let file_path = &file.0;
         let mut reader_f32 = SdrFileReader::builder()
             .file_path(file_path)
             .samples_per_chunk(1024)
@@ -301,6 +341,7 @@ mod tests {
             .build()
             .expect("Failed to create SdrFileReader for f64");
 
+        let mut chunks = 0;
         while let (Some(samples_f32), Some(samples_f64)) = (
             reader_f32.read_next_chunk_complexf32().unwrap(),
             reader_f64.read_next_chunk_complexf64().unwrap(),
@@ -311,6 +352,8 @@ mod tests {
                 assert!((f64::from(s32.re) - s64.re).abs() < f64::from(f32::EPSILON));
                 assert!((f64::from(s32.im) - s64.im).abs() < f64::from(f32::EPSILON));
             }
+            chunks += 1;
         }
+        assert_eq!(chunks, 2);
     }
 }
